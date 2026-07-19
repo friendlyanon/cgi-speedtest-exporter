@@ -1,5 +1,7 @@
 #!/bin/sh
 
+case ${TRACE-} in '' | 0) ;; *) set -x ;; esac
+
 case $REQUEST_METHOD in GET) ;; *)
   printf 'Status: 405 Method Not Allowed\nContent-Type: text/plain\nAllow: GET\n\nError: Only GET requests are allowed\n'
   exit 0
