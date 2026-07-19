@@ -1,5 +1,7 @@
 #!/bin/sh
 
+here=${0%/*}
+
 case ${TRACE-} in '' | 0) ;; *) set -x ;; esac
 
 case $REQUEST_METHOD in GET) ;; *)
@@ -53,7 +55,14 @@ case $PATH_INFO in
   *) get_404 ;;
 esac
 
-if duration=$(time -p sh -c 'speedtest-cli --json --secure >/tmp/speedtest-out 2>/tmp/speedtest-err' 2>&1)
+make_excludes() {
+  test -f "$1" || return 0
+  while read id _
+  do printf ' --exclude %s' "$id"
+  done <"$1"
+}
+
+if duration=$(time -p sh -c "speedtest-cli --json --secure$(make_excludes "$here/excludes") >/tmp/speedtest-out 2>/tmp/speedtest-err" 2>&1)
 then printf 'Content-Type: text/plain; version=0.0.4\n\n'
 else
   printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\n'
