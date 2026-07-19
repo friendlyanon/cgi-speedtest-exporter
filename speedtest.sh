@@ -64,12 +64,13 @@ $duration
 EOF
 
 jq --arg uuid "$(uuidgen)" --arg duration "$duration" -r '
+"distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"" as $labels |
 "# HELP speedtest_download_speed_Bps Last download speedtest result",
 "# TYPE speedtest_download_speed_Bps gauge",
-"speedtest_download_speed_Bps{distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"} \(.download)",
+"speedtest_download_speed_Bps{\($labels)} \(.download)",
 "# HELP speedtest_latency_seconds Measured latency on last speed test",
 "# TYPE speedtest_latency_seconds gauge",
-"speedtest_latency_seconds{distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"} \(.ping / 1000)",
+"speedtest_latency_seconds{\($labels)} \(.ping / 1000)",
 "# HELP speedtest_scrape_duration_seconds Time to preform last speed test",
 "# TYPE speedtest_scrape_duration_seconds gauge",
 "speedtest_scrape_duration_seconds{test_uuid=\"\($uuid)\"} \($duration)",
@@ -78,7 +79,7 @@ jq --arg uuid "$(uuidgen)" --arg duration "$duration" -r '
 "speedtest_up{test_uuid=\"\($uuid)\"} 1",
 "# HELP speedtest_upload_speed_Bps Last upload speedtest result",
 "# TYPE speedtest_upload_speed_Bps gauge",
-"speedtest_upload_speed_Bps{distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"} \(.upload)"
+"speedtest_upload_speed_Bps{\($labels)} \(.upload)"
 ' /tmp/speedtest-out
 
 exit 0
