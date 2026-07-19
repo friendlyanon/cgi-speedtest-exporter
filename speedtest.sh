@@ -52,7 +52,7 @@ case $PATH_INFO in
 esac
 
 if duration=$(time -p sh -c 'speedtest-cli --json --secure >/tmp/speedtest-out 2>/tmp/speedtest-err' 2>&1)
-then printf 'Content-Type: text/plain\n\n'
+then printf 'Content-Type: text/plain; version=0.0.4\n\n'
 else
   printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\n'
   cat /tmp/speedtest-err
