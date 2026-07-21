@@ -70,11 +70,8 @@ else
   exit 0
 fi
 
-read _ duration <<EOF
-$duration
-EOF
-
-jq --arg uuid "$(uuidgen)" --arg duration "$duration" -r '
+duration=${duration%%$'\n'*}
+jq --arg uuid "$(uuidgen)" --arg duration "${duration#* }" -r '
 "distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"" as $labels |
 "# HELP speedtest_download_speed_Bps Last download speedtest result",
 "# TYPE speedtest_download_speed_Bps gauge",
