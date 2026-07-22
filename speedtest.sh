@@ -1,7 +1,7 @@
 #!/bin/sh
 
 here=${0%/*}
-script=${0##/*}
+script=${0##*/}
 
 case ${TRACE-} in '' | 0) ;; *) set -x ;; esac
 
