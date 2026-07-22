@@ -13,7 +13,7 @@ esac
 
 get_root() {
   printf 'Content-Type: text/html\n\n'
-  cat <<'EOF'
+  cat << 'EOF'
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf8"><title>Speedtest Exporter</title></head>
@@ -37,7 +37,7 @@ case $1 in
 esac
 
 get_health() {
-  if curl -s -o /dev/null -L -I --connect-timeout 5 http://google.com 2>/dev/null
+  if curl -s -o /dev/null -L -I --connect-timeout 5 http://google.com 2> /dev/null
   then printf 'Content-Type: text/plain\n\nOK\n'
   else printf 'Status: 503 Service Unavailable\nContent-Type: text/plain\n\n%s\n' "$(map_curl_code $?)"
   fi
@@ -60,7 +60,7 @@ excludes_file=$here/excludes
 
 add_faulty() {
   faulty=$(jq -r .server.id /tmp/speedtest-out)
-  printf %s\\n "$faulty" >>"$excludes_file"
+  printf %s\\n "$faulty" >> "$excludes_file"
   printf '[%s] Excluded server %d: bogus latency measurement\n' "$script" "$faulty" >&2
 }
 
@@ -68,12 +68,12 @@ make_excludes() {
   test -f "$1" || return 0
   while read id _
   do printf ' --exclude %s' "$id"
-  done <"$1"
+  done < "$1"
 }
 
 while :
 do
-  if duration=$(time -p sh -c "speedtest-cli --json --secure$(make_excludes "$excludes_file") >/tmp/speedtest-out 2>/tmp/speedtest-err" 2>&1)
+  if duration=$(time -p sh -c "speedtest-cli --json --secure$(make_excludes "$excludes_file") > /tmp/speedtest-out 2> /tmp/speedtest-err" 2>&1)
   then printf 'Content-Type: text/plain; version=0.0.4\n\n'
   else
     printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\n'
