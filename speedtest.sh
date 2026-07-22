@@ -1,6 +1,7 @@
 #!/bin/sh
 
 here=${0%/*}
+script=${0##/*}
 
 case ${TRACE-} in '' | 0) ;; *) set -x ;; esac
 
@@ -55,6 +56,14 @@ case $PATH_INFO in
   *) get_404 ;;
 esac
 
+excludes_file=$here/excludes
+
+add_faulty() {
+  faulty=$(jq -r .server.id /tmp/speedtest-out)
+  printf %s\\n "$faulty" >>"$excludes_file"
+  printf '[%s] Excluded server %d: bogus latency measurement\n' "$script" "$faulty" >&2
+}
+
 make_excludes() {
   test -f "$1" || return 0
   while read id _
@@ -62,13 +71,21 @@ make_excludes() {
   done <"$1"
 }
 
-if duration=$(time -p sh -c "speedtest-cli --json --secure$(make_excludes "$here/excludes") >/tmp/speedtest-out 2>/tmp/speedtest-err" 2>&1)
-then printf 'Content-Type: text/plain; version=0.0.4\n\n'
-else
-  printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\n'
-  cat /tmp/speedtest-err
-  exit 0
-fi
+while :
+do
+  if duration=$(time -p sh -c "speedtest-cli --json --secure$(make_excludes "$excludes_file") >/tmp/speedtest-out 2>/tmp/speedtest-err" 2>&1)
+  then printf 'Content-Type: text/plain; version=0.0.4\n\n'
+  else
+    printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\n'
+    cat /tmp/speedtest-err
+    exit 0
+  fi
+
+  case $(jq -r .ping /tmp/speedtest-out) in
+    1800000) add_faulty ;;
+    *) break ;;
+  esac
+done
 
 duration=${duration%%$'\n'*}
 jq --arg uuid "$(uuidgen)" --arg duration "${duration#* }" -r '
