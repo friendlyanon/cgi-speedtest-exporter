@@ -84,7 +84,7 @@ do
   fi
 
   case $(jq -r .ping /tmp/speedtest-out) in
-    1800000) add_faulty ;;
+    1800000 | 1800000.0) add_faulty ;;
     *) break ;;
   esac
 done
