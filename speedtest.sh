@@ -76,7 +76,7 @@ make_excludes() {
 while :
 do
   if duration=$(time -p sh -c "speedtest-cli --json --secure$(make_excludes "$excludes_file") > /tmp/speedtest-out 2> /tmp/speedtest-err" 2>&1)
-  then printf 'Content-Type: text/plain; version=0.0.4\n\n'
+  then :
   else
     printf '[%s] %s\n' "$script" "$(IFS= read line < /tmp/speedtest-err; printf %s "$line")" >&2
     printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\n'
@@ -90,6 +90,7 @@ do
   esac
 done
 
+printf 'Content-Type: text/plain; version=0.0.4\n\n'
 duration=${duration%%$'\n'*}
 jq --arg uuid "$(uuidgen)" --arg duration "${duration#* }" -r '
 "distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"" as $labels |
