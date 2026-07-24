@@ -56,6 +56,42 @@ case $PATH_INFO in
   *) get_404 ;;
 esac
 
+parse_accept() {
+  case $1 in '') return 0 ;; esac
+  has_100=false
+  has_004=false
+  IFS=,
+  set -f
+  for range in $1
+  do
+    range=$(printf %s "$range" | sed 's/^[[:space:]]*//')
+    case $range in
+      text/plain*) ;;
+      '*/*'*) has_004=:; continue ;;
+      *) continue ;;
+    esac
+    case $range in *version=*) ;; *) has_004=:; continue ;; esac
+    case $range in
+      *version=1.0.0*) has_100=: ;;
+      *version=0.0.4*) has_004=: ;;
+    esac
+  done
+  if $has_100
+  then printf 1.0.0
+  elif $has_004
+  then printf 0.0.4
+  fi
+}
+
+accept=${HTTP_ACCEPT-}
+version=$(parse_accept "$accept")
+case $version in '')
+  printf '[%s] Could not negotiate version (Accept: %s)\n' "$script" "$accept" >&2
+  printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\nThis endpoint only serves PrometheusText1.0.0 or PrometheusText0.0.4\n'
+  exit 0
+  ;;
+esac
+
 excludes_file=$here/excludes
 
 add_faulty() (
@@ -90,7 +126,7 @@ do
   esac
 done
 
-printf 'Content-Type: text/plain; version=0.0.4\n\n'
+printf 'Content-Type: text/plain; version=%s\n\n' "$version"
 duration=${duration%%$'\n'*}
 jq --arg uuid "$(uuidgen)" --arg duration "${duration#* }" -r '
 "distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"" as $labels |
