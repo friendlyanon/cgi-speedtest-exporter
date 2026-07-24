@@ -84,8 +84,8 @@ do
     exit 0
   fi
 
-  case $(jq -r .ping /tmp/speedtest-out) in
-    1800000 | 1800000.0) add_faulty ;;
+  case $(jq -r '.ping + 0' /tmp/speedtest-out) in
+    1800000) add_faulty ;;
     *) break ;;
   esac
 done
