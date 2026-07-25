@@ -56,6 +56,21 @@ case $PATH_INFO in
   *) get_404 ;;
 esac
 
+parse_range() {
+  case $1 in '') return 0 ;; esac
+  first=1
+  version=
+  IFS=\;
+  set -f
+  for option in $1
+  do
+    case $first in 1) first=0; continue ;; esac
+    option=$(printf %s "$option" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    case $option in version=*) version=${option#*=} ;; esac
+  done
+  printf %s "$version"
+}
+
 parse_accept() {
   case $1 in '') return 0 ;; esac
   has_100=false
@@ -70,10 +85,9 @@ parse_accept() {
       '*/*'*) has_004=:; continue ;;
       *) continue ;;
     esac
-    case $range in *version=*) ;; *) has_004=:; continue ;; esac
-    case $range in
-      *version=1.0.0*) has_100=: ;;
-      *version=0.0.4*) has_004=: ;;
+    case $(parse_range "$range") in
+      1.0.0) has_100=: ;;
+      '' | 0.0.4) has_004=: ;;
     esac
   done
   if $has_100
@@ -126,7 +140,7 @@ do
   esac
 done
 
-printf 'Content-Type: text/plain; version=%s\n\n' "$version"
+printf 'Content-Type: text/plain;version=%s\n\n' "$version"
 duration=${duration%%$'\n'*}
 jq --arg uuid "$(uuidgen)" --arg duration "${duration#* }" -r '
 "distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"" as $labels |
