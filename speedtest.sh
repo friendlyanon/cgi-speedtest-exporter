@@ -12,8 +12,9 @@ case $REQUEST_METHOD in GET) ;; *)
 esac
 
 get_root() {
-  printf 'Content-Type: text/html\n\n'
   cat << 'EOF'
+Content-Type: text/html
+
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf8"><title>Speedtest Exporter</title></head>
