@@ -64,11 +64,21 @@ parse_range() {
   set -f
   for option in $1
   do
-    case $first in 1) first=0; continue ;; esac
     option=$(printf %s "$option" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    case $first in 1)
+      case $option in
+        text/plain) ;;
+        'text/*' | '*/*') return 0 ;;
+        *) return 1 ;;
+      esac
+      first=0
+      continue
+      ;;
+    esac
     case $option in version=*) version=${option#*=} ;; esac
   done
   printf %s "$version"
+  return 0
 }
 
 parse_accept() {
@@ -79,16 +89,11 @@ parse_accept() {
   set -f
   for range in $1
   do
-    range=$(printf %s "$range" | sed 's/^[[:space:]]*//')
-    case $range in
-      text/plain*) ;;
-      'text/*'* | '*/*'*) has_004=:; continue ;;
-      *) continue ;;
-    esac
-    case $(parse_range "$range") in
+    if version=$(parse_range "$(printf %s "$range" | sed 's/^[[:space:]]*//')")
+    then case $version in
       1.0.0) has_100=: ;;
       '' | 0.0.4) has_004=: ;;
-    esac
+    esac; fi
   done
   if $has_100
   then printf 1.0.0
