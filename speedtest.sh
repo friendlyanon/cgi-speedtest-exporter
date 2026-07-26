@@ -101,7 +101,13 @@ accept=${HTTP_ACCEPT-}
 version=$(parse_accept "$accept")
 case $version in '')
   printf '[%s] Could not negotiate version (Accept: %s)\n' "$script" "$accept" >&2
-  printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\nThis endpoint only serves PrometheusText1.0.0 or PrometheusText0.0.4\n'
+  cat << 'EOF'
+Status: 406 Not Acceptable
+Content-Type: text/plain
+Vary: Accept
+
+This endpoint only serves PrometheusText1.0.0 or PrometheusText0.0.4
+EOF
   exit 0
   ;;
 esac
@@ -140,7 +146,7 @@ do
   esac
 done
 
-printf 'Content-Type: text/plain;version=%s\n\n' "$version"
+printf 'Content-Type: text/plain;version=%s\nVary: Accept\n\n' "$version"
 duration=${duration%%$'\n'*}
 jq --arg uuid "$(uuidgen)" --arg duration "${duration#* }" -r '
 "distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"" as $labels |
