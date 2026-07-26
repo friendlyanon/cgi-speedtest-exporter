@@ -38,7 +38,7 @@ esac
 
 get_health() {
   if curl -s -o /dev/null -L -I --connect-timeout 5 http://google.com 2> /dev/null
-  then printf 'Content-Type: text/plain\n\nOK\n'
+  then printf 'Content-Type: text/plain\nCache-Control: no-store\n\nOK\n'
   else printf 'Status: 503 Service Unavailable\nContent-Type: text/plain\n\n%s\n' "$(map_curl_code $?)"
   fi
   exit 0
@@ -146,7 +146,7 @@ do
   esac
 done
 
-printf 'Content-Type: text/plain;version=%s\nVary: Accept\n\n' "$version"
+printf 'Content-Type: text/plain;version=%s\nCache-Control: no-store\nVary: Accept\n\n' "$version"
 duration=${duration%%$'\n'*}
 jq --arg uuid "$(uuidgen)" --arg duration "${duration#* }" -r '
 "distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"" as $labels |
