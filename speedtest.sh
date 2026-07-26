@@ -82,7 +82,7 @@ parse_accept() {
     range=$(printf %s "$range" | sed 's/^[[:space:]]*//')
     case $range in
       text/plain*) ;;
-      '*/*'*) has_004=:; continue ;;
+      'text/*'* | '*/*'*) has_004=:; continue ;;
       *) continue ;;
     esac
     case $(parse_range "$range") in
