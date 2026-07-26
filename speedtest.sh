@@ -65,17 +65,15 @@ parse_range() {
   for option in $1
   do
     option=$(printf %s "$option" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-    case $first in 1)
-      case $option in
-        text/plain) ;;
-        'text/*' | '*/*') return 0 ;;
-        *) return 1 ;;
-      esac
-      first=0
-      continue
-      ;;
+    case $first in 0)
+      case $option in version=*) version=${option#*=} ;; esac; continue ;;
     esac
-    case $option in version=*) version=${option#*=} ;; esac
+    first=0
+    case $option in
+      text/plain) ;;
+      'text/*' | '*/*') return 0 ;;
+      *) return 1 ;;
+    esac
   done
   printf %s "$version"
   return 0
