@@ -2,6 +2,8 @@
 
 here=${0%/*}
 script=${0##*/}
+nl=$(printf \\n.)
+nl=${nl%.}
 
 case ${TRACE-} in '' | 0) ;; *) set -x ;; esac
 
@@ -151,7 +153,7 @@ do
 done
 
 printf 'Content-Type: text/plain;version=%s\nCache-Control: no-store\nVary: Accept\n\n' "$version"
-duration=${duration%%$'\n'*}
+duration=${duration%%"$nl"*}
 jq --arg uuid "$(uuidgen)" --arg duration "${duration#* }" -r '
 "distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"" as $labels |
 "# HELP speedtest_download_speed_Bps Last download speedtest result",
