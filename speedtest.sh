@@ -137,7 +137,7 @@ make_excludes() {
 
 while :
 do
-  if duration=$(time -p sh -c "speedtest-cli --json --secure$(make_excludes "$excludes_file") > /tmp/speedtest-out 2> /tmp/speedtest-err" 2>&1)
+  if duration=$({ time -p sh -c "speedtest-cli --json --secure$(make_excludes "$excludes_file") > /tmp/speedtest-out 2> /tmp/speedtest-err"; } 2>&1)
   then :
   else
     printf '[%s] %s\n' "$script" "$(IFS= read line < /tmp/speedtest-err; printf %s "$line")" >&2
