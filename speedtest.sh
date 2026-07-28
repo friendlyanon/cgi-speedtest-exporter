@@ -9,6 +9,11 @@ trace=:
 case ${TRACE-} in '' | 0) ;; *) trace= ;; esac
 $trace set -x
 
+case ${TMPDIR:="${TMP:-"$(CDPATH=/:/var; cd -P tmp)"}"} in '')
+  printf '[%s] Unable to determine temporary directory path\n' "$script" >&2
+  exit 1
+esac
+
 case $REQUEST_METHOD in GET) ;; *)
   printf 'Status: 405 Method Not Allowed\nContent-Type: text/plain\nAllow: GET\n\nError: Only GET requests are allowed\n'
   exit 0
@@ -124,7 +129,7 @@ excludes_file=$here/excludes
 
 add_faulty() (
   read id description << EOF
-$(jq -r '"\(.server.id) name:[\(.server.name)] isp:[\(.client.isp)]"' /tmp/speedtest-out)
+$(jq -r '"\(.server.id) name:[\(.server.name)] isp:[\(.client.isp)]"' "$TMPDIR/speedtest-out")
 EOF
   printf %s\\n "$id $description: bogus latency" >> "$excludes_file"
   printf '[%s] Excluded server %d: bogus latency measurement\n' "$script" "$id" >&2
@@ -137,18 +142,26 @@ make_excludes() {
   done < "$1"
 }
 
+measure() {
+  excludes=$(make_excludes "$excludes_file")
+  $trace set +x
+  {
+    time -p sh -c 'speedtest-cli --json --secure'"$excludes"' > "$0/speedtest-out" 2> "$0/speedtest-err"' "$TMPDIR"
+  } 2>&1
+}
+
 while :
 do
-  if duration=$(excludes=$(make_excludes "$excludes_file"); $trace set +x; { time -p sh -c "speedtest-cli --json --secure$excludes > /tmp/speedtest-out 2> /tmp/speedtest-err"; } 2>&1)
+  if duration=$(measure)
   then :
   else
-    printf '[%s] %s\n' "$script" "$(last=; while IFS= read line; do last=$line; done < /tmp/speedtest-err; printf %s "$last")" >&2
+    printf '[%s] %s\n' "$script" "$(last=; while IFS= read line; do last=$line; done < "$TMPDIR/speedtest-err"; printf %s "$last")" >&2
     printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\n'
-    cat /tmp/speedtest-err
+    cat "$TMPDIR/speedtest-err"
     exit 0
   fi
 
-  case $(jq -r '.ping + 0' /tmp/speedtest-out) in
+  case $(jq -r '.ping + 0' "$TMPDIR/speedtest-out") in
     1800000) add_faulty ;;
     *) break ;;
   esac
@@ -173,6 +186,6 @@ jq --arg uuid "$(uuidgen)" --arg duration "${duration#* }" -r '
 "# HELP speedtest_upload_speed_Bps Last upload speedtest result",
 "# TYPE speedtest_upload_speed_Bps gauge",
 "speedtest_upload_speed_Bps{\($labels)} \(.upload)"
-' /tmp/speedtest-out
+' "$TMPDIR/speedtest-out"
 
 exit 0
