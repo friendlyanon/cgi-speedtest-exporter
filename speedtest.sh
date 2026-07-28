@@ -140,7 +140,7 @@ do
   if duration=$({ time -p sh -c "speedtest-cli --json --secure$(make_excludes "$excludes_file") > /tmp/speedtest-out 2> /tmp/speedtest-err"; } 2>&1)
   then :
   else
-    printf '[%s] %s\n' "$script" "$(IFS= read line < /tmp/speedtest-err; printf %s "$line")" >&2
+    printf '[%s] %s\n' "$script" "$(last=; while IFS= read line; do last=$line; done < /tmp/speedtest-err; printf %s "$last")" >&2
     printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\n'
     cat /tmp/speedtest-err
     exit 0
