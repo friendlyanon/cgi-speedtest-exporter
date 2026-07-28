@@ -5,7 +5,9 @@ script=${0##*/}
 nl=$(printf \\n.)
 nl=${nl%.}
 
-case ${TRACE-} in '' | 0) ;; *) set -x ;; esac
+trace=:
+case ${TRACE-} in '' | 0) ;; *) trace= ;; esac
+$trace set -x
 
 case $REQUEST_METHOD in GET) ;; *)
   printf 'Status: 405 Method Not Allowed\nContent-Type: text/plain\nAllow: GET\n\nError: Only GET requests are allowed\n'
@@ -137,7 +139,7 @@ make_excludes() {
 
 while :
 do
-  if duration=$({ time -p sh -c "speedtest-cli --json --secure$(make_excludes "$excludes_file") > /tmp/speedtest-out 2> /tmp/speedtest-err"; } 2>&1)
+  if duration=$(excludes=$(make_excludes "$excludes_file"); $trace set +x; { time -p sh -c "speedtest-cli --json --secure$excludes > /tmp/speedtest-out 2> /tmp/speedtest-err"; } 2>&1)
   then :
   else
     printf '[%s] %s\n' "$script" "$(last=; while IFS= read line; do last=$line; done < /tmp/speedtest-err; printf %s "$last")" >&2
