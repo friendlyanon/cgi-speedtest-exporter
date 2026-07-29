@@ -141,9 +141,10 @@ make_excludes() {
 }
 
 measure() {
-  cmd='speedtest-cli --json --secure'"$(make_excludes "$excludes_file")"' > "$0/speedtest-out" 2> "$0/speedtest-err"'
+  export TMPDIR
+  cmd='speedtest-cli --json --secure'"$(make_excludes "$excludes_file")"' > "$TMPDIR/speedtest-out" 2> "$TMPDIR/speedtest-err"'
   { $trace set +x; } 2> /dev/null
-  { time -p sh -c "$cmd" "$TMPDIR"; } 2>&1
+  { time -p sh -c "$cmd"; } 2>&1
 }
 
 last_line() {
