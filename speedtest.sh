@@ -143,11 +143,17 @@ make_excludes() {
 }
 
 measure() {
-  excludes=$(make_excludes "$excludes_file")
-  $trace set +x
-  {
-    time -p sh -c 'speedtest-cli --json --secure'"$excludes"' > "$0/speedtest-out" 2> "$0/speedtest-err"' "$TMPDIR"
-  } 2>&1
+  cmd='speedtest-cli --json --secure'"$(make_excludes "$excludes_file")"' > "$0/speedtest-out" 2> "$0/speedtest-err"'
+  { $trace set +x; } 2> /dev/null
+  { time -p sh -c "$cmd" "$TMPDIR"; } 2>&1
+}
+
+last_line() {
+  last=
+  while IFS= read line
+  do last=$line
+  done < "$1"
+  printf %s "$last"
 }
 
 while :
@@ -155,7 +161,7 @@ do
   if duration=$(measure)
   then :
   else
-    printf '[%s] %s\n' "$script" "$(last=; while IFS= read line; do last=$line; done < "$TMPDIR/speedtest-err"; printf %s "$last")" >&2
+    printf '[%s] %s\n' "$script" "$(last_line "$TMPDIR/speedtest-err")" >&2
     printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\n'
     cat "$TMPDIR/speedtest-err"
     exit 0
