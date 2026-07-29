@@ -128,7 +128,7 @@ esac
 excludes_file=$here/excludes
 
 add_faulty() (
-  read id description << EOF
+  read -r id description << EOF
 $(jq -r '"\(.server.id) name:[\(.server.name)] isp:[\(.client.isp)]"' "$TMPDIR/speedtest-out")
 EOF
   printf %s\\n "$id $description: bogus latency" >> "$excludes_file"
@@ -137,7 +137,7 @@ EOF
 
 make_excludes() {
   test -f "$1" || return 0
-  while read id _
+  while read -r id _
   do printf ' --exclude %s' "$id"
   done < "$1"
 }
@@ -150,7 +150,7 @@ measure() {
 
 last_line() {
   last=
-  while IFS= read line
+  while IFS= read -r line
   do last=$line
   done < "$1"
   printf %s "$last"
