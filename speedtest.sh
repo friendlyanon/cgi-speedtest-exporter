@@ -128,11 +128,9 @@ esac
 excludes_file=$here/excludes
 
 add_faulty() (
-  read -r id description << EOF
-$(jq -r '"\(.server.id) name:[\(.server.name)] isp:[\(.client.isp)]"' "$TMPDIR/speedtest-out")
-EOF
-  printf %s\\n "$id $description: bogus latency" >> "$excludes_file"
-  printf '[%s] Excluded server %d: bogus latency measurement\n' "$script" "$id" >&2
+  line=$(jq -r '"\(.server.id) name:[\(.server.name)] isp:[\(.client.isp)]"' "$TMPDIR/speedtest-out")
+  printf '%s: bogus latency\n' "$line" >> "$excludes_file"
+  printf '[%s] Excluded server %d: bogus latency measurement\n' "$script" "${line%% *}" >&2
 )
 
 make_excludes() {
