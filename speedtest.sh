@@ -6,7 +6,7 @@ nl=$(printf \\n.)
 nl=${nl%.}
 
 trace=:
-case ${TRACE-} in '' | 0) ;; *) trace= ;; esac
+case ${TRACE-} in 1) trace= ;; esac
 $trace set -x
 
 case ${TMPDIR:="${TMP:-"$(CDPATH=/:/var; cd -P tmp)"}"} in '')
