@@ -5,15 +5,18 @@ script=${0##*/}
 nl=$(printf \\n.)
 nl=${nl%.}
 
-add_nl=1
-case ${STDERR_WITHOUT_LF-} in
-  1) add_nl=0 ;;
-  0) ;;
-  '') case ${SERVER_SOFTWARE-} in nginx/*) add_nl=0 ;; esac
-esac
+make_err_fmt() {
+  printf '[%%s] %%s'
+  add_nl=
+  case ${STDERR_WITHOUT_LF-} in
+    1) add_nl=: ;;
+    0) ;;
+    *) case ${SERVER_SOFTWARE-} in nginx/*) add_nl=: ;; esac
+  esac
+  $add_nl printf \\\\n
+}
 
-err_fmt='[%s] %s'
-case $add_nl in 1) err_fmt="$err_fmt\n" ;; esac
+err_fmt=$(make_err_fmt)
 err() { printf "$err_fmt" "$script" "$1" >&2; }
 
 trace=:
@@ -78,7 +81,7 @@ case $PATH_INFO in
 esac
 
 parse_range() {
-  case $1 in '') return 0 ;; esac
+  ${1:+:} return 0
   first=1
   version=
   IFS=\;
@@ -101,7 +104,7 @@ parse_range() {
 }
 
 parse_accept() {
-  case $1 in '') return 0 ;; esac
+  ${1:+:} return 0
   has_100=false
   has_004=false
   IFS=,
