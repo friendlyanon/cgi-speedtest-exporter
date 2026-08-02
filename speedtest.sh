@@ -5,12 +5,23 @@ script=${0##*/}
 nl=$(printf \\n.)
 nl=${nl%.}
 
+add_nl=1
+case ${STDERR_WITHOUT_LF-} in
+  1) add_nl=0 ;;
+  0) ;;
+  '') case ${SERVER_SOFTWARE-} in nginx/*) add_nl=0 ;; esac
+esac
+
+err_fmt='[%s] %s'
+case $add_nl in 1) err_fmt="$err_fmt\n" ;; esac
+err() { printf "$err_fmt" "$script" "$1" >&2; }
+
 trace=:
 case ${TRACE-} in 1) trace= ;; esac
 $trace set -x
 
 case ${TMPDIR:="${TMP:-"$(CDPATH=/:/var; cd -P tmp)"}"} in '')
-  printf '[%s] Unable to determine temporary directory path\n' "$script" >&2
+  err 'Unable to determine temporary directory path'
   exit 1
 esac
 
@@ -113,7 +124,7 @@ parse_accept() {
 accept=${HTTP_ACCEPT-}
 version=$(parse_accept "$accept")
 case $version in '')
-  printf '[%s] Could not negotiate version (Accept: %s)\n' "$script" "$accept" >&2
+  err "Could not negotiate version (Accept: $accept)"
   cat << 'EOF'
 Status: 406 Not Acceptable
 Content-Type: text/plain
@@ -130,7 +141,7 @@ excludes_file=$here/excludes
 add_faulty() (
   line=$(jq -r '"\(.server.id) name:[\(.server.name)] isp:[\(.client.isp)]"' "$TMPDIR/speedtest-out")
   printf '%s: bogus latency\n' "$line" >> "$excludes_file"
-  printf '[%s] Excluded server %d: bogus latency measurement\n' "$script" "${line%% *}" >&2
+  err "Excluded server ${line%% *}: bogus latency measurement"
 )
 
 make_excludes() {
@@ -160,7 +171,7 @@ do
   if duration=$(measure)
   then :
   else
-    printf '[%s] %s\n' "$script" "$(last_line "$TMPDIR/speedtest-err")" >&2
+    err "$(last_line "$TMPDIR/speedtest-err")"
     printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\n'
     cat "$TMPDIR/speedtest-err"
     exit 0
