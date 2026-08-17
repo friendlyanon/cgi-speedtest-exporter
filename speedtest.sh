@@ -31,7 +31,6 @@ esac
 case $REQUEST_METHOD in GET) ;; *)
   printf 'Status: 405 Method Not Allowed\nContent-Type: text/plain\nAllow: GET\n\nError: Only GET requests are allowed\n'
   exit 0
-  ;;
 esac
 
 get_root() {
@@ -90,7 +89,7 @@ parse_range() {
   do
     option=$(printf %s "$option" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     case $first in 0)
-      case $option in version=*) version=${option#*=} ;; esac; continue ;;
+      case $option in version=*) version=${option#*=} ;; esac; continue
     esac
     first=0
     case $option in
@@ -136,7 +135,6 @@ Vary: Accept
 This endpoint only serves PrometheusText1.0.0 or PrometheusText0.0.4
 EOF
   exit 0
-  ;;
 esac
 
 excludes_file=$here/excludes
