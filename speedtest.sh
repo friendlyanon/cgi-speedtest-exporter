@@ -11,7 +11,7 @@ make_err_fmt() {
   case ${STDERR_WITHOUT_LF-} in
     1) add_nl=: ;;
     0) ;;
-    *) case ${SERVER_SOFTWARE-} in nginx/*) add_nl=: ;; esac
+    *) case ${SERVER_SOFTWARE-} in nginx/*) add_nl=:; esac
   esac
   $add_nl printf \\\\n
 }
@@ -20,7 +20,7 @@ err_fmt=$(make_err_fmt)
 err() { printf "$err_fmt" "$script" "$1" >&2; }
 
 trace=:
-case ${TRACE-} in 1) trace= ;; esac
+case ${TRACE-} in 1) trace=; esac
 $trace set -x
 
 case ${TMPDIR:="${TMP:-"$(CDPATH=/:/var; cd -P tmp)"}"} in '')
@@ -89,7 +89,7 @@ parse_range() {
   do
     option=$(printf %s "$option" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     case $first in 0)
-      case $option in version=*) version=${option#*=} ;; esac; continue
+      case $option in version=*) version=${option#*=}; esac; continue
     esac
     first=0
     case $option in
