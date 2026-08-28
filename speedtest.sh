@@ -167,6 +167,17 @@ last_line() {
   printf %s "$last"
 }
 
+check_result() {
+  read -r up down ping << EOF
+$(jq -r '"\(.download < 2000000) \(.upload < 2000000) \(.ping == 1800000)"' "$TMPDIR/speedtest-out")
+EOF
+  res=ok
+  case $up in true) res=retry; esac
+  case $down in true) res=retry; esac
+  case $ping in true) res=faulty; esac
+  printf %s "$res"
+}
+
 while :
 do
   if duration=$(measure)
@@ -178,9 +189,10 @@ do
     exit 0
   fi
 
-  case $(jq -r '.ping + 0' "$TMPDIR/speedtest-out") in
-    1800000) add_faulty ;;
-    *) break ;;
+  case $(check_result) in
+    faulty) add_faulty ;;
+    retry) ;;
+    ok) break ;;
   esac
 done
 
