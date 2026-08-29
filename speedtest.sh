@@ -191,7 +191,7 @@ do
 
   case $(check_result) in
     faulty) add_faulty ;;
-    retry) ;;
+    retry) err 'Anomalous results, rerunning measurement' ;;
     ok) break ;;
   esac
 done
