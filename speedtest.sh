@@ -79,13 +79,19 @@ case $PATH_INFO in
   *) get_404 ;;
 esac
 
+trim() {
+  sed 's/^[[:space:]]*//;s/[[:space:]]*$//' << EOF
+$1
+EOF
+}
+
 parse_range() {
   ${1:+:} return 0
   version=
   IFS=\;
   set -f
   set -- $1
-  case $1 in
+  case $(trim "$1") in
     text/plain) ;;
     'text/*' | '*/*') return 0 ;;
     *) return 1 ;;
@@ -93,7 +99,7 @@ parse_range() {
   shift
   for option
   do
-    option=$(printf %s "$option" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    option=$(trim "$option")
     case $option in version=*) version=${option#*=}; esac
   done
   printf %s "$version"
@@ -108,7 +114,7 @@ parse_accept() {
   set -f
   for range in $1
   do
-    if version=$(parse_range "$(printf %s "$range" | sed 's/^[[:space:]]*//')")
+    if version=$(parse_range "$(trim "$range")")
     then case $version in
       1.0.0) has_100=: ;;
       '' | 0.0.4) has_004=: ;;
