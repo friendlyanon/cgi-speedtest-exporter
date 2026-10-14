@@ -86,7 +86,7 @@ EOF
 }
 
 parse_range() {
-  ${1:+:} return 0
+  ${1:+:} return 1
   version=
   IFS=\;
   set -f
