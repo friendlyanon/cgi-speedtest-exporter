@@ -81,22 +81,20 @@ esac
 
 parse_range() {
   ${1:+:} return 0
-  first=1
   version=
   IFS=\;
   set -f
-  for option in $1
+  set -- $1
+  case $1 in
+    text/plain) ;;
+    'text/*' | '*/*') return 0 ;;
+    *) return 1 ;;
+  esac
+  shift
+  for option
   do
     option=$(printf %s "$option" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-    case $first in 0)
-      case $option in version=*) version=${option#*=}; esac; continue
-    esac
-    first=0
-    case $option in
-      text/plain) ;;
-      'text/*' | '*/*') return 0 ;;
-      *) return 1 ;;
-    esac
+    case $option in version=*) version=${option#*=}; esac
   done
   printf %s "$version"
   return 0
