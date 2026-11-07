@@ -86,50 +86,60 @@ EOF
 }
 
 parse_range() {
-  ${1:+:} return 1
+  ${1:+:} return 0
   version=
+  escaping=
   IFS=\;
   set -f
   set -- $1
   case $(trim "$1") in
     text/plain) ;;
-    'text/*' | '*/*') return 0 ;;
-    *) return 1 ;;
+    'text/*' | '*/*') return 4 ;;
+    *) return 0 ;;
   esac
   shift
   for option
   do
     option=$(trim "$option")
-    case $option in escaping=*) case ,${option#*=}, in *,allow-utf-8,*) ;; *) return 1; esac; esac
-    case $option in version=*) version=${option#*=}; esac
+    case $option in
+      version=*) case ${option#*=} in 1.0.0) version=100 ;; 0.0.4) version=4 ;; esac ;;
+      escaping=*) case ${option#*=} in
+        allow-utf-8 | underscores | values | dots) escaping=${option#*=} ;;
+        *) return 0 ;;
+      esac ;;
+    esac
   done
-  printf %s "$version"
-  return 0
+  printf %s "${escaping:-allow-utf-8}"
+  return "$version"
 }
 
 parse_accept() {
   ${1:+:} return 0
+  out=
+  escaping=
   has_100=false
   has_004=false
   IFS=,
   set -f
   for range in $1
   do
-    if version=$(parse_range "$(trim "$range")")
-    then case $version in
-      1.0.0) has_100=: ;;
-      '' | 0.0.4) has_004=: ;;
-    esac; fi
+    out=$(parse_range "$(trim "$range")")
+    case $? in
+      100) has_100=:; escaping=$out ;;
+      4) has_004=: ;;
+    esac
   done
   if $has_100
-  then printf 1.0.0
+  then printf '1.0.0 %s' ";escaping=$escaping"
   elif $has_004
   then printf 0.0.4
   fi
 }
 
 accept=${HTTP_ACCEPT-}
-version=$(parse_accept "$accept")
+read -r version escaping << EOF
+$(parse_accept "$accept")
+EOF
 case $version in '')
   err "Could not negotiate version (Accept: $accept)"
   cat << 'EOF'
@@ -137,7 +147,7 @@ Status: 406 Not Acceptable
 Content-Type: text/plain
 Vary: Accept
 
-This endpoint only serves PrometheusText1.0.0 (escaping=allow-utf-8) or PrometheusText0.0.4
+This endpoint only serves PrometheusText1.0.0 or PrometheusText0.0.4
 EOF
   exit 0
 esac
@@ -200,9 +210,6 @@ do
     ok) break ;;
   esac
 done
-
-escaping=
-case $version in 1.0.0) escaping=\;escaping=allow-utf-8; esac
 
 printf 'Content-Type: text/plain;version=%s%s\nCache-Control: no-store\nVary: Accept\n\n' "$version" "$escaping"
 duration=${duration%%"$nl"*}
