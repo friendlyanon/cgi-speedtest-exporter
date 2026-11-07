@@ -214,7 +214,8 @@ done
 printf 'Content-Type: text/plain;version=%s%s\nCache-Control: no-store\nVary: Accept\n\n' "$version" "$escaping"
 duration=${duration%%"$nl"*}
 jq --arg uuid "$(uuidgen)" --arg duration "${duration#* }" -r '
-"distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"" as $labels |
+def v: gsub("\\\\"; "\\\\") | gsub("\n"; "\\n") | gsub("\""; "\\\"");
+"distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name | v)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp | v)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"" as $labels |
 "# HELP speedtest_download_speed_Bps Last download speedtest result",
 "# TYPE speedtest_download_speed_Bps gauge",
 "speedtest_download_speed_Bps{\($labels)} \(.download)",
