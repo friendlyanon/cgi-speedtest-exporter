@@ -183,14 +183,8 @@ last_line() {
 }
 
 check_result() {
-  read -r up down ping << EOF
-$(jq -r '"\(.download < 2000000) \(.upload < 2000000) \(.ping == 1800000)"' "$TMPDIR/speedtest-out")
-EOF
-  res=ok
-  case $up in true) res=retry; esac
-  case $down in true) res=retry; esac
-  case $ping in true) res=faulty; esac
-  printf %s "$res"
+  jq -r 'if .ping == 1800000 then "faulty" elif .download < 2000000 or .upload < 2000000 then "retry" else "ok" end' \
+    "$TMPDIR/speedtest-out"
 }
 
 while :
