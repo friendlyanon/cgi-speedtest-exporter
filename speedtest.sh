@@ -174,14 +174,6 @@ measure() {
   { time -p sh -c "$cmd"; } 2>&1
 }
 
-last_line() {
-  last=
-  while IFS= read -r line
-  do last=$line
-  done < "$1"
-  printf %s "$last"
-}
-
 check_result() {
   jq -r 'if .ping == 1800000 then "faulty" elif .download < 2000000 or .upload < 2000000 then "retry" else "ok" end' \
     "$TMPDIR/speedtest-out"
@@ -192,7 +184,7 @@ do
   if duration=$(measure)
   then :
   else
-    err "$(last_line "$TMPDIR/speedtest-err")"
+    err "$(tail -n 1 "$TMPDIR/speedtest-err")"
     printf 'Status: 500 Internal Server Error\nContent-Type: text/plain\n\n'
     cat "$TMPDIR/speedtest-err"
     exit 0
