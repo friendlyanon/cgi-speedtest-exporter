@@ -100,6 +100,7 @@ parse_range() {
   for option
   do
     option=$(trim "$option")
+    case $option in escaping=*) case ,${option#*=}, in *,allow-utf-8,*) ;; *) return 1; esac; esac
     case $option in version=*) version=${option#*=}; esac
   done
   printf %s "$version"
@@ -136,7 +137,7 @@ Status: 406 Not Acceptable
 Content-Type: text/plain
 Vary: Accept
 
-This endpoint only serves PrometheusText1.0.0 or PrometheusText0.0.4
+This endpoint only serves PrometheusText1.0.0 (escaping=allow-utf-8) or PrometheusText0.0.4
 EOF
   exit 0
 esac
@@ -200,7 +201,10 @@ do
   esac
 done
 
-printf 'Content-Type: text/plain;version=%s\nCache-Control: no-store\nVary: Accept\n\n' "$version"
+escaping=
+case $version in 1.0.0) escaping=\;escaping=allow-utf-8; esac
+
+printf 'Content-Type: text/plain;version=%s%s\nCache-Control: no-store\nVary: Accept\n\n' "$version" "$escaping"
 duration=${duration%%"$nl"*}
 jq --arg uuid "$(uuidgen)" --arg duration "${duration#* }" -r '
 "distance=\"\(.server.d)\",server_country=\"\(.server.country)\",server_id=\"\(.server.id)\",server_lat=\"\(.server.lat)\",server_lon=\"\(.server.lon)\",server_name=\"\(.server.name)\",test_uuid=\"\($uuid)\",user_ip=\"\(.client.ip)\",user_isp=\"\(.client.isp)\",user_lat=\"\(.client.lat)\",user_lon=\"\(.client.lon)\"" as $labels |
