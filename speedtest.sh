@@ -87,8 +87,9 @@ EOF
 
 parse_range() {
   ${1:+:} return 0
-  version=
+  version=0
   escaping=
+  value=
   IFS=\;
   set -f
   set -- $1
@@ -103,8 +104,8 @@ parse_range() {
     option=$(trim "$option")
     case $option in
       version=*) case ${option#*=} in 1.0.0) version=100 ;; 0.0.4) version=4 ;; esac ;;
-      escaping=*) case ${option#*=} in
-        allow-utf-8 | underscores | values | dots) escaping=${option#*=} ;;
+      escaping=*) value=${option#*=}; case $value in
+        allow-utf-8 | underscores | values | dots) escaping=$value ;;
         *) return 0 ;;
       esac ;;
     esac
